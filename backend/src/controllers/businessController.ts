@@ -33,24 +33,63 @@ export const businessController = {
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
-
   createBusiness: async (req: Request, res: Response) => {
     try {
-      const business = await prisma.business.create({
-        data: req.body,
+      const ownerId = req.session?.userId;
+      if (!ownerId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const {
+        name,
+        phoneNumber,
+        description,
+        address,
+        city,
+        country,
+        postalCode,
+        website,
+        category,
+        workingHours,
+      } = req.body;
+
+      if (!name || !phoneNumber) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const existing = await prisma.business.findFirst({
+        where: {
+          ownerId,
+          name,
+        },
       });
 
-      if (!business) {
-        return res.status(400).json({ error: "Business not created" });
+      if (existing) {
+        return res
+          .status(409)
+          .json({ error: "Business with this name already exists" });
       }
-      const existringBusiness = await prisma.business.findUnique({
-        where: { id: business.id },
+
+      // 👉 Krijo biznesin
+      const business = await prisma.business.create({
+        data: {
+          ownerId,
+          name,
+          phoneNumber,
+          description,
+          address,
+          city,
+          country,
+          postalCode,
+          website,
+          category,
+          workingHours,
+        },
       });
-      if (existringBusiness) {
-        return res.status(409).json({ error: "Business already exists" });
-      }
+
       res.status(201).json(business);
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   },

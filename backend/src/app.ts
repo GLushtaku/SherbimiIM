@@ -5,12 +5,10 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import businessRoutes from "./routes/business";
+import authRoutes from "./routes/auth";
 // import serviceRoutes from "./routes/services";
-// import authRoutes from "./routes/auth";
-// import session from "express-session";
+import session from "express-session";
 // import categoryRoutes from "./routes/categories";
-// import passport from "passport";
-// import "./config/passport";
 // import oauthRoutes from "./routes/oauth";
 // import employeeRoutes from "./routes/employee";
 // import bookingRoutes from "./routes/bookings";
@@ -50,21 +48,21 @@ app.use(morgan("combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// app.use(
-//   session({
-//     secret: process.env.SESSION_SECRET || "supersecret",
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: {
-//       httpOnly: true,
-//       secure: false, // Set to false for development
-//       maxAge: 1000 * 60 * 60 * 24, // 1 ditë
-//       sameSite: "lax", // Set to lax for development
-//     },
-//   })
-// );
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "supersecret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false, // Set to false for development
+      maxAge: 1000 * 60 * 60 * 24, // 1 ditë
+      sameSite: "lax", // Set to lax for development
+    },
+  })
+);
 
-// Initialize passport after session
+// Initialize passport after session (commented out for now)
 // app.use(passport.initialize());
 // app.use(passport.session());
 // Routes
@@ -97,8 +95,8 @@ app.get("/debug-session", (req, res) => {
 //   }
 // });
 
-// // API Routes
-// app.use("/api/auth", authRoutes);
+// API Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/businesses", businessRoutes);
 // app.use("/api/services", serviceRoutes);
 // app.use("/api/categories", categoryRoutes);
