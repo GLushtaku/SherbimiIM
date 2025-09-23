@@ -8,7 +8,7 @@ const router = (0, express_1.Router)();
 router.get("/", serviceController_1.serviceController.getAllServices);
 router.get("/:id", serviceController_1.serviceController.getServiceById);
 // Routes që kërkojnë autentifikim dhe businessId
-router.post("/", session_1.requireAuth, (0, session_1.requireRole)(["BUSINESS"]), session_1.getBusinessId, serviceController_1.serviceController.createService);
-router.put("/:id", session_1.requireAuth, (0, session_1.requireRole)(["BUSINESS"]), session_1.getBusinessId, serviceController_1.serviceController.updateService);
-router.delete("/:id", session_1.requireAuth, (0, session_1.requireRole)(["BUSINESS"]), session_1.getBusinessId, serviceController_1.serviceController.deleteService);
+router.post("/", ...(0, session_1.requireBusiness)(), serviceController_1.serviceController.createService);
+router.put("/:id", ...(0, session_1.requireBusiness)("service"), serviceController_1.serviceController.updateService);
+router.delete("/:id", ...(0, session_1.requireBusiness)("service"), serviceController_1.serviceController.deleteService);
 exports.default = router;

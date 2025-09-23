@@ -82,11 +82,11 @@ export const serviceController = {
           },
         },
       });
-      
+
       if (services.length === 0) {
         return res.status(200).json({ services: [] }); // ose 404 nëse preferon
       }
-      
+
       return res.json({ services });
     } catch (error) {
       console.error("Error fetching services:", error);
@@ -166,20 +166,7 @@ export const serviceController = {
         });
       }
 
-      // Verifiko që service-i i përket këtij biznesi
-      const existingService = await prisma.service.findFirst({
-        where: {
-          id,
-          businessId,
-        },
-      });
-
-      if (!existingService) {
-        return res.status(404).json({
-          error: "Service not found or you don't have permission to update it",
-        });
-      }
-
+      // Business ownership is already verified by middleware
       const service = await prisma.service.update({
         where: { id },
         data: req.body,
@@ -191,7 +178,7 @@ export const serviceController = {
     }
   },
 
-  // DELETE /api/services/{ id}
+  // DELETE /api/services/{id}
   deleteService: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -203,20 +190,7 @@ export const serviceController = {
         });
       }
 
-      // Verifiko qe service-i i përket këtij biznesi
-      const existingService = await prisma.service.findFirst({
-        where: {
-          id,
-          businessId,
-        },
-      });
-
-      if (!existingService) {
-        return res.status(404).json({
-          error: "Service not found or you don't have permission to delete it",
-        });
-      }
-
+      // Business ownership is already verified by middleware
       await prisma.service.delete({
         where: { id },
       });

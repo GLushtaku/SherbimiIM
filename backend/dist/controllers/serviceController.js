@@ -151,18 +151,7 @@ exports.serviceController = {
                     error: "Business ID is required",
                 });
             }
-            // Verifiko që service-i i përket këtij biznesi
-            const existingService = await prisma.service.findFirst({
-                where: {
-                    id,
-                    businessId,
-                },
-            });
-            if (!existingService) {
-                return res.status(404).json({
-                    error: "Service not found or you don't have permission to update it",
-                });
-            }
+            // Business ownership is already verified by middleware
             const service = await prisma.service.update({
                 where: { id },
                 data: req.body,
@@ -174,7 +163,7 @@ exports.serviceController = {
             res.status(500).json({ error: "Failed to update service" });
         }
     },
-    // DELETE /api/services/{ id}
+    // DELETE /api/services/{id}
     deleteService: async (req, res) => {
         try {
             const { id } = req.params;
@@ -184,18 +173,7 @@ exports.serviceController = {
                     error: "Business ID is required",
                 });
             }
-            // Verifiko qe service-i i përket këtij biznesi
-            const existingService = await prisma.service.findFirst({
-                where: {
-                    id,
-                    businessId,
-                },
-            });
-            if (!existingService) {
-                return res.status(404).json({
-                    error: "Service not found or you don't have permission to delete it",
-                });
-            }
+            // Business ownership is already verified by middleware
             await prisma.service.delete({
                 where: { id },
             });

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { serviceController } from "../controllers/serviceController";
-import { requireAuth, requireRole, getBusinessId } from "../middleware/session";
+import { requireBusiness } from "../middleware/session";
 
 const router = Router();
 
@@ -9,25 +9,15 @@ router.get("/", serviceController.getAllServices);
 router.get("/:id", serviceController.getServiceById);
 
 // Routes që kërkojnë autentifikim dhe businessId
-router.post(
-  "/",
-  requireAuth,
-  requireRole(["BUSINESS"]),
-  getBusinessId,
-  serviceController.createService
-);
+router.post("/", ...requireBusiness(), serviceController.createService);
 router.put(
   "/:id",
-  requireAuth,
-  requireRole(["BUSINESS"]),
-  getBusinessId,
+  ...requireBusiness("service"),
   serviceController.updateService
 );
 router.delete(
   "/:id",
-  requireAuth,
-  requireRole(["BUSINESS"]),
-  getBusinessId,
+  ...requireBusiness("service"),
   serviceController.deleteService
 );
 
