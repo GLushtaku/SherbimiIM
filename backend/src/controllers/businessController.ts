@@ -35,7 +35,7 @@ export const businessController = {
   },
   createBusiness: async (req: Request, res: Response) => {
     try {
-      const ownerId = req.session?.userId;
+      const ownerId = (req.session as any)?.userId;
       if (!ownerId) {
         return res.status(401).json({ error: "Unauthorized" });
       }

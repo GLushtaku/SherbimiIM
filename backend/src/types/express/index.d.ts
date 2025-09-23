@@ -7,6 +7,10 @@ declare global {
       id: string;
       role: Role | string; // pranon edhe string
     }
+
+    interface Request {
+      businessId?: string;
+    }
   }
 }
 

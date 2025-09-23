@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import businessRoutes from "./routes/business";
 import authRoutes from "./routes/auth";
+import serviceRoutes from "./routes/services";
 // import serviceRoutes from "./routes/services";
 import session from "express-session";
 // import categoryRoutes from "./routes/categories";
@@ -98,7 +99,7 @@ app.get("/debug-session", (req, res) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/businesses", businessRoutes);
-// app.use("/api/services", serviceRoutes);
+app.use("/api/services", serviceRoutes);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/employee", employeeRoutes);
 // app.use("/api/bookings", bookingRoutes);

@@ -11,6 +11,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const client_1 = require("@prisma/client");
 const business_1 = __importDefault(require("./routes/business"));
 const auth_1 = __importDefault(require("./routes/auth"));
+const services_1 = __importDefault(require("./routes/services"));
 // import serviceRoutes from "./routes/services";
 const express_session_1 = __importDefault(require("express-session"));
 // import categoryRoutes from "./routes/categories";
@@ -89,7 +90,7 @@ app.get("/debug-session", (req, res) => {
 // API Routes
 app.use("/api/auth", auth_1.default);
 app.use("/api/businesses", business_1.default);
-// app.use("/api/services", serviceRoutes);
+app.use("/api/services", services_1.default);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/employee", employeeRoutes);
 // app.use("/api/bookings", bookingRoutes);
