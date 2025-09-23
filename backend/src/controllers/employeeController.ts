@@ -250,11 +250,9 @@ export const employeeController = {
       });
 
       if (!service) {
-        return res
-          .status(404)
-          .json({
-            error: "Service not found or doesn't belong to your business",
-          });
+        return res.status(404).json({
+          error: "Service not found or doesn't belong to your business",
+        });
       }
 
       // Create employee-service relationship
@@ -297,11 +295,9 @@ export const employeeController = {
       });
 
       if (!employeeService) {
-        return res
-          .status(404)
-          .json({
-            error: "Employee-service relationship not found or access denied",
-          });
+        return res.status(404).json({
+          error: "Employee-service relationship not found or access denied",
+        });
       }
 
       // Delete the relationship
