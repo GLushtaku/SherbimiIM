@@ -14,6 +14,7 @@ const auth_1 = __importDefault(require("./routes/auth"));
 const services_1 = __importDefault(require("./routes/services"));
 // import serviceRoutes from "./routes/services";
 const express_session_1 = __importDefault(require("express-session"));
+const categories_1 = __importDefault(require("./routes/categories"));
 // import categoryRoutes from "./routes/categories";
 // import oauthRoutes from "./routes/oauth";
 // import employeeRoutes from "./routes/employee";
@@ -91,6 +92,7 @@ app.get("/debug-session", (req, res) => {
 app.use("/api/auth", auth_1.default);
 app.use("/api/businesses", business_1.default);
 app.use("/api/services", services_1.default);
+app.use("/api/categories", categories_1.default);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/employee", employeeRoutes);
 // app.use("/api/bookings", bookingRoutes);

@@ -78,14 +78,17 @@ exports.serviceController = {
                     },
                 },
             });
-            res.json({ services });
+            if (services.length === 0) {
+                return res.status(200).json({ services: [] }); // ose 404 nëse preferon
+            }
+            return res.json({ services });
         }
         catch (error) {
             console.error("Error fetching services:", error);
             res.status(500).json({ error: "Failed to fetch services" });
         }
     },
-    // GET /api/services/:id
+    // GET /api/services//{id}
     getServiceById: async (req, res) => {
         try {
             const { id } = req.params;
@@ -125,9 +128,8 @@ exports.serviceController = {
             }
             const serviceData = {
                 ...req.body,
-                businessId, // Përdor businessId nga session, jo nga body
+                businessId,
             };
-            console.log("Service data to create:", serviceData);
             const service = await prisma.service.create({
                 data: serviceData,
             });
@@ -139,7 +141,7 @@ exports.serviceController = {
             res.status(500).json({ error: "Failed to create service" });
         }
     },
-    // PUT /api/services/:id
+    // PUT /api/services/{id}
     updateService: async (req, res) => {
         try {
             const { id } = req.params;
@@ -172,7 +174,7 @@ exports.serviceController = {
             res.status(500).json({ error: "Failed to update service" });
         }
     },
-    // DELETE /api/services/:id
+    // DELETE /api/services/{ id}
     deleteService: async (req, res) => {
         try {
             const { id } = req.params;
@@ -182,7 +184,7 @@ exports.serviceController = {
                     error: "Business ID is required",
                 });
             }
-            // Verifiko që service-i i përket këtij biznesi
+            // Verifiko qe service-i i përket këtij biznesi
             const existingService = await prisma.service.findFirst({
                 where: {
                     id,

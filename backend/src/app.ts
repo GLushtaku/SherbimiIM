@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth";
 import serviceRoutes from "./routes/services";
 // import serviceRoutes from "./routes/services";
 import session from "express-session";
+import categoriesRoute from "./routes/categories";
 // import categoryRoutes from "./routes/categories";
 // import oauthRoutes from "./routes/oauth";
 // import employeeRoutes from "./routes/employee";
@@ -100,6 +101,7 @@ app.get("/debug-session", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/businesses", businessRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/categories", categoriesRoute);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/employee", employeeRoutes);
 // app.use("/api/bookings", bookingRoutes);
