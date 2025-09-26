@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.requireBusiness = exports.requireBusinessOwnership = exports.verifyBusinessOwnership = exports.getBusinessId = exports.getBusinessData = exports.requireRole = exports.requireAuth = void 0;
+exports.requireBusiness = exports.requireClientAccess = exports.requireClient = exports.requireBusinessOwnership = exports.verifyBusinessOwnership = exports.getBusinessId = exports.getBusinessData = exports.requireRole = exports.requireAuth = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 // Middleware to check if user is authenticated
@@ -118,6 +118,22 @@ const requireBusinessOwnership = (req, res, next) => {
     next();
 };
 exports.requireBusinessOwnership = requireBusinessOwnership;
+// Middleware to check if user has CLIENT role
+const requireClient = (req, res, next) => {
+    if (!req.session.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+    }
+    if (req.session.userRole !== "CLIENT") {
+        return res.status(403).json({ error: "Client access required" });
+    }
+    next();
+};
+exports.requireClient = requireClient;
+// Combined middleware for client operations
+const requireClientAccess = () => {
+    return [exports.requireAuth, exports.requireClient];
+};
+exports.requireClientAccess = requireClientAccess;
 // Combined middleware for business operations - replaces multiple middlewares
 const requireBusiness = (resourceType) => {
     return [

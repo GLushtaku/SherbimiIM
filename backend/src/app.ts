@@ -11,6 +11,9 @@ import serviceRoutes from "./routes/services";
 import session from "express-session";
 import categoriesRoute from "./routes/categories";
 import employeesRoute from "./routes/employee";
+import bookingRoutes from "./routes/booking";
+import authorRoute from "./routes/author";
+import booksRoute from "./routes/books";
 // import categoryRoutes from "./routes/categories";
 // import oauthRoutes from "./routes/oauth";
 // import employeeRoutes from "./routes/employee";
@@ -21,7 +24,7 @@ import employeesRoute from "./routes/employee";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001 || 3002;
 
 // Initialize Prisma
 const prisma = new PrismaClient();
@@ -104,6 +107,9 @@ app.use("/api/businesses", businessRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/categories", categoriesRoute);
 app.use("/api/employees", employeesRoute);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/authors", authorRoute);
+app.use("/api/books", booksRoute);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/employee", employeeRoutes);
 // app.use("/api/bookings", bookingRoutes);

@@ -224,9 +224,7 @@ exports.employeeController = {
                 },
             });
             if (!service) {
-                return res
-                    .status(404)
-                    .json({
+                return res.status(404).json({
                     error: "Service not found or doesn't belong to your business",
                 });
             }
@@ -266,9 +264,7 @@ exports.employeeController = {
                 },
             });
             if (!employeeService) {
-                return res
-                    .status(404)
-                    .json({
+                return res.status(404).json({
                     error: "Employee-service relationship not found or access denied",
                 });
             }

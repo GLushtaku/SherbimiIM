@@ -157,6 +157,28 @@ export const requireBusinessOwnership = (
   next();
 };
 
+// Middleware to check if user has CLIENT role
+export const requireClient = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  if (req.session.userRole !== "CLIENT") {
+    return res.status(403).json({ error: "Client access required" });
+  }
+
+  next();
+};
+
+// Combined middleware for client operations
+export const requireClientAccess = () => {
+  return [requireAuth, requireClient];
+};
+
 // Combined middleware for business operations - replaces multiple middlewares
 export const requireBusiness = (resourceType?: "service" | "employee") => {
   return [
