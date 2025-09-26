@@ -1,32 +1,34 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { authorApi, ApiError, Author } from "../../lib/api";
+import { bookApi, ApiError, Book } from "../../lib/api";
 
 interface AuthorListProps {
-  onEditAuthor?: (author: Author) => void;
-  onAuthorDeleted?: (authorId: string) => void;
+  onEditBook?: (book: Book) => void;
+  onAddBook?: (book: Book) => void;
+  onBookDeleted?: (bookId: string) => void;
 }
 
 const AuthorList: React.FC<AuthorListProps> = ({
-  onEditAuthor,
-  onAuthorDeleted,
+  onEditBook,
+  onBookDeleted,
+  onAddBook,
 }) => {
-  const [authors, setAuthors] = useState<Author[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadAuthors = async () => {
+  const loadBooks = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await authorApi.getAllAuthors();
-      setAuthors(data);
+      const data = await bookApi.getAllBooks();
+      setBooks(data);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("Gabim në ngarkimin e autorëve");
+        setError("Gabim në ngarkimin e librave");
       }
     } finally {
       setLoading(false);
@@ -34,38 +36,36 @@ const AuthorList: React.FC<AuthorListProps> = ({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("A jeni të sigurt që dëshironi të fshini këtë autor?")) {
+    if (!confirm("A jeni të sigurt që dëshironi të fshini këtë libër?")) {
       return;
     }
-
     try {
       setLoading(true);
       setError(null);
-      await authorApi.deleteAuthor(id);
-      setAuthors(authors.filter((author) => author.id !== id));
-      if (onAuthorDeleted) {
-        onAuthorDeleted(id);
+      await bookApi.deleteBook(id);
+      setBooks(books.filter((book) => book.id !== id));
+      if (onBookDeleted) {
+        onBookDeleted(id);
       }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("Gabim në fshirjen e autorit");
+        setError("Gabim në fshirjen e Lubrit");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Load authors on component mount and when refreshTrigger changes
   useEffect(() => {
-    loadAuthors();
-  }, [onEditAuthor, onAuthorDeleted]);
+    loadBooks();
+  }, [onAddBook, onEditBook, onBookDeleted]);
 
-  if (loading && authors.length === 0) {
+  if (loading && books.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="text-gray-500">Duke ngarkuar autorët...</div>
+        <div className="text-gray-500">Duke ngarkuar librat...</div>
       </div>
     );
   }
@@ -80,36 +80,40 @@ const AuthorList: React.FC<AuthorListProps> = ({
         </div>
       )}
 
-      {authors.length === 0 ? (
+      {books.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          Nuk ka autorë të regjistruar.
+          Nuk ka libra të regjistruar.
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {authors.map((author) => (
-              <li key={author.id} className="px-6 py-4">
+            {books.map((book) => (
+              <li key={book.id} className="px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="text-lg font-medium text-gray-900">
-                      {author.name} {author.surname}
+                      {book.name}
                     </h3>
-                    <p className="text-sm text-gray-500">{author.email}</p>
-                    {author.books && author.books.length > 0 && (
-                      <p className="text-sm text-gray-600">
-                        Libra: {author.books.length}
-                      </p>
+                    {book.author && (
+                      <>
+                        <p className="text-sm text-gray-500">
+                          {book.author.email}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Autori: {book.author.name} {book.author.surname}
+                        </p>
+                      </>
                     )}
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => onEditAuthor?.(author)}
+                      onClick={() => onEditBook?.(book)}
                       className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-3 rounded text-sm"
                     >
                       Përditëso
                     </button>
                     <button
-                      onClick={() => handleDelete(author.id)}
+                      onClick={() => handleDelete(book.id)}
                       className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
                     >
                       Fshi

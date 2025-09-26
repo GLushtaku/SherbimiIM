@@ -8,19 +8,16 @@ import AuthorList from "./AuthorList";
 const AuthorManagement: React.FC = () => {
   const [editingAuthor, setEditingAuthor] = useState<Author | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger
 
   const handleAuthorAdded = (author: Author) => {
     console.log("Autor i ri u shtua:", author);
     setShowForm(false);
-    setRefreshTrigger((prev) => prev + 1); // Trigger refresh
   };
 
   const handleAuthorUpdated = (author: Author) => {
     console.log("Autori u përditësua:", author);
     setEditingAuthor(null);
     setShowForm(false);
-    setRefreshTrigger((prev) => prev + 1); // Trigger refresh
   };
 
   const handleEditAuthor = (author: Author) => {
@@ -35,7 +32,6 @@ const AuthorManagement: React.FC = () => {
 
   const handleAuthorDeleted = (authorId: string) => {
     console.log("Autori u fshi:", authorId);
-    setRefreshTrigger((prev) => prev + 1); // Trigger refresh
   };
 
   return (
@@ -62,7 +58,6 @@ const AuthorManagement: React.FC = () => {
         )}
 
         <AuthorList
-          key={refreshTrigger} // Force re-render when refreshTrigger changes
           onEditAuthor={handleEditAuthor}
           onAuthorDeleted={handleAuthorDeleted}
         />

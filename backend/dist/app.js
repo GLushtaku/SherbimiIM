@@ -27,7 +27,7 @@ const books_1 = __importDefault(require("./routes/books"));
 // Load environment variables
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001 || 3002;
 // Initialize Prisma
 const prisma = new client_1.PrismaClient();
 // Test database connection

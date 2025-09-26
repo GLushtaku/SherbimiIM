@@ -5,4 +5,7 @@ const bookController_1 = require("../controllers/bookController");
 const router = (0, express_1.Router)();
 router.get("/", bookController_1.bookController.getAllBooks);
 router.post("/", bookController_1.bookController.createBook);
+router.get("/:id", bookController_1.bookController.getBookkById);
+router.put("/:id", bookController_1.bookController.updateBook);
+router.delete("/:id", bookController_1.bookController.deleteBook);
 exports.default = router;

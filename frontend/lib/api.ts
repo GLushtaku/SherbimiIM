@@ -72,13 +72,9 @@ export interface Author {
 
 export interface Book {
   id: string;
-  title: string;
+  name: string;
   authorId: string;
-  isbn?: string;
-  publishedDate?: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
+  author?: Author;
 }
 
 // API Error class
@@ -325,6 +321,16 @@ export const bookApi = {
     publishedDate?: string;
     description?: string;
   }) => apiClient.post<Book>("/books", bookData),
+
+  // Get book by ID
+  getBookById: (id: string) => apiClient.get<Book>(`/books/${id}`),
+
+  // Update book
+  updateBook: (id: string, bookData: { name: string; authorId: string }) =>
+    apiClient.put<Book>(`/books/${id}`, bookData),
+
+  // Delete book
+  deleteBook: (id: string) => apiClient.delete(`/books/${id}`),
 };
 
 export { apiClient };
