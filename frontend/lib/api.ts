@@ -34,6 +34,9 @@ export interface Category {
   id: string;
   name: string;
   description?: string;
+  icon?: string;
+  services?: number;
+  businessCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,6 +80,30 @@ export interface Book {
   author?: Author;
 }
 
+export interface PlatformStats {
+  businesses: number;
+  clients: number;
+  totalUsers: number;
+  categories: number;
+  totalBookings: number;
+  activeBookings: number;
+  completedBookings: number;
+  totalServices: number;
+  completionRate: number;
+  averageBookingsPerBusiness: number;
+  averageServicesPerBusiness: number;
+}
+
+export interface DashboardStats {
+  totalBookings: number;
+  totalServices: number;
+  totalEmployees: number;
+  recentBookings: number;
+  monthlyBookings: number;
+  bookingsGrowth: number;
+  servicesGrowth: number;
+}
+
 // API Error class
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -112,11 +139,25 @@ class ApiClient {
       const response = await fetch(url, config);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          response.status,
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
+        let errorMessage = `HTTP error! status: ${response.status}`;
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If response is not JSON, use default message
+          if (response.status === 401) {
+            errorMessage = "Email ose fjalëkalimi janë gabim";
+          } else if (response.status === 403) {
+            errorMessage = "Nuk keni të drejta për të kryer këtë veprim";
+          } else if (response.status === 400) {
+            errorMessage = "Të dhënat e dërguara nuk janë të vlefshme";
+          } else if (response.status === 500) {
+            errorMessage = "Gabim në server";
+          }
+        }
+
+        throw new ApiError(response.status, errorMessage);
       }
 
       // Handle empty responses
@@ -128,8 +169,8 @@ class ApiClient {
       }
       throw new ApiError(
         0,
-        `Network error: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Gabim në lidhje: ${
+          error instanceof Error ? error.message : "Gabim i panjohur"
         }`
       );
     }
@@ -174,17 +215,17 @@ export const authApi = {
     password: string;
     name: string;
     role: "CLIENT" | "BUSINESS";
-  }) => apiClient.post<User>("/auth/register", userData),
+  }) => apiClient.post<{ user: User }>("/auth/register", userData),
 
   // Login user
-  login: (credentials: { email: string; password: string }) =>
-    apiClient.post<User>("/auth/login", credentials),
+  login: (credentials: { email: string; password: string; userType: string }) =>
+    apiClient.post<{ user: User }>("/auth/login", credentials),
 
   // Logout user
   logout: () => apiClient.post("/auth/logout"),
 
   // Get current user
-  getCurrentUser: () => apiClient.get<User>("/auth/me"),
+  getCurrentUser: () => apiClient.get<{ user: User }>("/auth/me"),
 };
 
 // Business API
@@ -214,7 +255,8 @@ export const categoryApi = {
     apiClient.post<Category>("/categories/create", categoryData),
 
   // Get all categories
-  getAllCategories: () => apiClient.get<Category[]>("/categories"),
+  getAllCategories: () =>
+    apiClient.get<{ categories: Category[] }>("/categories"),
 
   // Get category by name
   getCategoryByName: (name: string) =>
@@ -331,6 +373,16 @@ export const bookApi = {
 
   // Delete book
   deleteBook: (id: string) => apiClient.delete(`/books/${id}`),
+};
+
+// Stats API
+export const statsApi = {
+  // Get platform statistics
+  getPlatformStats: () => apiClient.get<{ stats: PlatformStats }>("/stats"),
+
+  // Get dashboard statistics (for businesses)
+  getDashboardStats: () =>
+    apiClient.get<{ stats: DashboardStats }>("/stats/dashboard"),
 };
 
 export { apiClient };
