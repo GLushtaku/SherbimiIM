@@ -1,5 +1,3 @@
-import { register } from "module";
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface User {
@@ -8,6 +6,29 @@ export interface User {
   name: string;
   phoneNumber: string;
   role: string;
+  createdAt: string;
+  businessProfile?: {
+    id: string;
+    companyName?: string;
+    businessLicense?: string;
+    taxId?: string;
+    yearsInBusiness?: number;
+    emergencyContact?: string;
+    alternatePhone?: string;
+    acceptsWalkIns?: boolean;
+    appointmentRequired?: boolean;
+    maxBookingsPerDay?: number;
+  };
+  clientProfile?: {
+    id: string;
+    dateOfBirth?: string;
+    gender?: string;
+    emergencyContact?: string;
+    preferredContact?: string;
+    notificationPreferences?: Record<string, unknown>;
+    totalBookings?: number;
+    loyaltyPoints?: number;
+  };
 }
 
 export interface Business {
@@ -24,10 +45,33 @@ export interface Service {
   name: string;
   description?: string;
   price: number;
-  duration: number;
+  durationMinutes: number;
   businessId: string;
   createdAt: string;
   updatedAt: string;
+  // Related data
+  business?: {
+    id: string;
+    name: string;
+    city?: string;
+    address?: string;
+    phoneNumber?: string;
+    website?: string;
+  };
+  category?: {
+    id: string;
+    name: string;
+    description?: string;
+    icon?: string;
+  };
+  employeeServices?: {
+    employee: {
+      id: string;
+      name: string;
+      position?: string;
+      avatar?: string;
+    };
+  }[];
 }
 
 export interface Category {
@@ -55,12 +99,60 @@ export interface Booking {
   clientId: string;
   serviceId: string;
   employeeId: string;
-  date: string;
-  time: string;
+  start: string;
+  end: string;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  // Related data
+  client?: {
+    id: string;
+    name: string;
+    email: string;
+    phoneNumber?: string;
+  };
+  service?: {
+    id: string;
+    name: string;
+    price: number;
+    durationMinutes: number;
+  };
+  employee?: {
+    id: string;
+    name: string;
+    position: string;
+  };
+}
+
+export interface CreateBookingData {
+  serviceId: string;
+  employeeId: string;
+  start: string;
+  end: string;
+  notes?: string;
+}
+
+export interface UpdateBookingData {
+  start?: string;
+  end?: string;
+  status?: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  notes?: string;
+}
+
+export interface AvailabilityCheck {
+  serviceId: string;
+  employeeId: string;
+  date: string;
+}
+
+export interface AvailabilityResponse {
+  availableSlots: string[];
+  reservedSlots: string[];
+  allSlots?: {
+    time: string;
+    available: boolean;
+  }[];
 }
 
 export interface Author {
@@ -182,7 +274,7 @@ class ApiClient {
   }
 
   // POST request
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: data ? JSON.stringify(data) : undefined,
@@ -190,7 +282,7 @@ class ApiClient {
   }
 
   // PUT request
-  async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
@@ -226,21 +318,127 @@ export const authApi = {
 
   // Get current user
   getCurrentUser: () => apiClient.get<{ user: User }>("/auth/me"),
+
+  // Update user profile
+  updateProfile: (profileData: {
+    name?: string;
+    phoneNumber?: string;
+    profileData?: {
+      businessProfile?: {
+        companyName?: string;
+        businessLicense?: string;
+        taxId?: string;
+        yearsInBusiness?: number;
+        emergencyContact?: string;
+        alternatePhone?: string;
+        acceptsWalkIns?: boolean;
+        appointmentRequired?: boolean;
+        maxBookingsPerDay?: number;
+      };
+      clientProfile?: {
+        dateOfBirth?: string;
+        gender?: string;
+        emergencyContact?: string;
+        preferredContact?: string;
+        notificationPreferences?: Record<string, unknown>;
+      };
+    };
+  }) =>
+    apiClient.put<{ message: string; user: User }>(
+      "/auth/profile",
+      profileData
+    ),
+
+  // Update password
+  updatePassword: (passwordData: {
+    currentPassword: string;
+    newPassword: string;
+  }) => apiClient.put<{ message: string }>("/auth/password", passwordData),
 };
 
 // Business API
 export const businessApi = {
-  // Get all businesses
-  getAllBusinesses: () => apiClient.get<Business[]>("/businesses"),
-
-  // Get business by ID
-  getBusinessById: (id: string) => apiClient.get<Business>(`/businesses/${id}`),
+  // Public endpoints (no authentication required)
+  getAllBusinesses: () => publicApiClient.get<Business[]>("/businesses"),
+  getBusinessById: (id: string) =>
+    publicApiClient.get<Business>(`/businesses/${id}`),
 };
+
+// Public API client for services (no authentication required)
+class PublicApiClient {
+  private baseUrl: string;
+
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl;
+  }
+
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+
+    const config: RequestInit = {
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+      // No credentials for public endpoints
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If response is not JSON, use default message
+          if (response.status === 400) {
+            errorMessage = "Të dhënat e dërguara nuk janë të vlefshme";
+          } else if (response.status === 500) {
+            errorMessage = "Gabim në server";
+          }
+        }
+
+        throw new ApiError(response.status, errorMessage);
+      }
+
+      // Handle empty responses
+      const text = await response.text();
+      return text ? JSON.parse(text) : ({} as T);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError(
+        0,
+        `Gabim në lidhje: ${
+          error instanceof Error ? error.message : "Gabim i panjohur"
+        }`
+      );
+    }
+  }
+
+  // GET request
+  async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: "GET" });
+  }
+}
+
+// Create public API client instance
+const publicApiClient = new PublicApiClient(API_BASE_URL || "");
 
 //Service API
 export const serviceApi = {
-  getAllServices: () => apiClient.get<Service[]>("/services"),
-  getServiceById: (id: string) => apiClient.get<Service>(`/services/${id}`),
+  // Public endpoints (no authentication required)
+  getAllServices: () =>
+    publicApiClient.get<{ services: Service[] }>("/services"),
+  getServiceById: (id: string) =>
+    publicApiClient.get<Service>(`/services/${id}`),
+
+  // Protected endpoints (authentication required)
   createService: (service: Service) =>
     apiClient.post<Service>("/services", service),
   updateService: (id: string, service: Service) =>
@@ -250,17 +448,16 @@ export const serviceApi = {
 
 // Category API
 export const categoryApi = {
-  // Create category
+  // Public endpoints (no authentication required)
+  getAllCategories: () =>
+    publicApiClient.get<{ categories: Category[] }>("/categories"),
+
+  getCategoryByName: (name: string) =>
+    publicApiClient.get<Category>(`/categories/${name}`),
+
+  // Protected endpoints (authentication required)
   createCategory: (categoryData: { name: string; description?: string }) =>
     apiClient.post<Category>("/categories/create", categoryData),
-
-  // Get all categories
-  getAllCategories: () =>
-    apiClient.get<{ categories: Category[] }>("/categories"),
-
-  // Get category by name
-  getCategoryByName: (name: string) =>
-    apiClient.get<Category>(`/categories/${name}`),
 };
 
 //Employe API {require bussines authentication}
@@ -303,10 +500,34 @@ export const employeeApi = {
 // Booking API (requires client authentication)
 export const bookingApi = {
   // Get all bookings
-  getAllBookings: () => apiClient.get<Booking[]>("/bookings"),
+  getAllBookings: (params?: { date?: string; limit?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.date) searchParams.append("date", params.date);
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+
+    const queryString = searchParams.toString();
+    return apiClient.get<Booking[]>(
+      `/bookings${queryString ? `?${queryString}` : ""}`
+    );
+  },
 
   // Get booking by ID
   getBookingById: (id: string) => apiClient.get<Booking>(`/bookings/${id}`),
+
+  // Create new booking
+  createBooking: (data: CreateBookingData) =>
+    apiClient.post<Booking>("/bookings", data),
+
+  // Update booking
+  updateBooking: (id: string, data: UpdateBookingData) =>
+    apiClient.put<Booking>(`/bookings/${id}`, data),
+
+  // Delete booking
+  deleteBooking: (id: string) => apiClient.delete(`/bookings/${id}`),
+
+  // Check availability
+  checkAvailability: (data: AvailabilityCheck) =>
+    apiClient.post<AvailabilityResponse>("/bookings/availability", data),
 };
 
 // Author API
@@ -377,10 +598,11 @@ export const bookApi = {
 
 // Stats API
 export const statsApi = {
-  // Get platform statistics
-  getPlatformStats: () => apiClient.get<{ stats: PlatformStats }>("/stats"),
+  // Public endpoints (no authentication required)
+  getPlatformStats: () =>
+    publicApiClient.get<{ stats: PlatformStats }>("/stats"),
 
-  // Get dashboard statistics (for businesses)
+  // Protected endpoints (authentication required)
   getDashboardStats: () =>
     apiClient.get<{ stats: DashboardStats }>("/stats/dashboard"),
 };

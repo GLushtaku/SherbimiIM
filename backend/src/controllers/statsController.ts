@@ -89,7 +89,7 @@ export const statsController = {
   // GET /api/stats/dashboard - Get dashboard-specific stats (for businesses)
   getDashboardStats: async (req: Request, res: Response) => {
     try {
-      const businessId = (req as any).user?.businessId;
+      const businessId = req.businessId;
 
       if (!businessId) {
         return res.status(401).json({ error: "Business ID not found" });

@@ -4,20 +4,29 @@ exports.bookingController = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 exports.bookingController = {
-    //GET /api/bookings = get all bookings 
+    //GET /api/bookings = get all bookings
     getAllBookings: async (req, res) => {
         try {
             const { date, limit } = req.query;
-            const whereClause = {};
+            // Get clientId from session
+            const clientId = req.session.userId;
+            if (!clientId) {
+                return res.status(401).json({ error: "Authentication required" });
+            }
+            const whereClause = {
+                clientId: clientId, // Only show bookings for the current user
+            };
             if (date) {
                 const startDate = new Date(date);
                 const endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + 1);
-                whereClause.appointmentTime = {
+                whereClause.start = {
                     gte: startDate,
                     lt: endDate,
                 };
             }
+            console.log("Fetching bookings for clientId:", clientId);
+            console.log("Where clause:", whereClause);
             const bookings = await prisma.booking.findMany({
                 where: whereClause,
                 take: limit ? parseInt(limit) : undefined,
@@ -50,6 +59,7 @@ exports.bookingController = {
                     start: "asc",
                 },
             });
+            console.log("Found bookings:", bookings.length);
             res.json(bookings);
         }
         catch (error) {
@@ -69,25 +79,25 @@ exports.bookingController = {
                             id: true,
                             name: true,
                             email: true,
-                            phoneNumber: true
-                        }
+                            phoneNumber: true,
+                        },
                     },
                     service: {
                         select: {
                             id: true,
                             name: true,
                             price: true,
-                            durationMinutes: true
-                        }
+                            durationMinutes: true,
+                        },
                     },
                     employee: {
                         select: {
                             id: true,
                             position: true,
-                            name: true
-                        }
-                    }
-                }
+                            name: true,
+                        },
+                    },
+                },
             });
             if (!booking) {
                 return res.status(404).json({ error: "Booking not found" });
@@ -102,7 +112,36 @@ exports.bookingController = {
     //POST /api/bookings = create new booking
     createBooking: async (req, res) => {
         try {
-            const { clientId, serviceId, employeeId, start, end, status = "PENDING", } = req.body;
+            const { serviceId, employeeId, start, end, status = "PENDING", } = req.body;
+            // Get clientId from session
+            const clientId = req.session.userId;
+            if (!clientId) {
+                return res.status(401).json({ error: "Authentication required" });
+            }
+            // Validate required fields
+            if (!serviceId || !employeeId || !start || !end) {
+                return res.status(400).json({
+                    error: "Missing required fields: serviceId, employeeId, start, end",
+                });
+            }
+            // Check for existing bookings at the same time
+            const existingBooking = await prisma.booking.findFirst({
+                where: {
+                    clientId: clientId,
+                    start: {
+                        gte: new Date(start),
+                        lt: new Date(end),
+                    },
+                    status: {
+                        in: ["PENDING", "CONFIRMED"],
+                    },
+                },
+            });
+            if (existingBooking) {
+                return res.status(409).json({
+                    error: "You already have a booking at this time. Please choose a different time slot.",
+                });
+            }
             const booking = await prisma.booking.create({
                 data: {
                     clientId,
@@ -142,6 +181,11 @@ exports.bookingController = {
         }
         catch (error) {
             console.error("Error creating booking:", error);
+            console.error("Request body:", req.body);
+            console.error("Session data:", {
+                userId: req.session.userId,
+                userRole: req.session.userRole,
+            });
             res.status(500).json({ error: "Failed to create booking" });
         }
     },
@@ -210,6 +254,11 @@ exports.bookingController = {
     checkAvailability: async (req, res) => {
         try {
             const { employeeId, serviceId, date } = req.body;
+            // Get clientId from session
+            const clientId = req.session.userId;
+            if (!clientId) {
+                return res.status(401).json({ error: "Authentication required" });
+            }
             if (!employeeId || !serviceId || !date) {
                 return res
                     .status(400)
@@ -240,10 +289,14 @@ exports.bookingController = {
                 },
                 select: {
                     start: true,
+                    clientId: true,
+                    serviceId: true,
                 },
             });
-            // Generate available time slots (simplified - every hour from 9 AM to 5 PM)
+            // Generate all time slots (simplified - every hour from 9 AM to 5 PM)
+            const allSlots = [];
             const availableSlots = [];
+            const reservedSlots = [];
             const startHour = 9;
             const endHour = 17;
             for (let hour = startHour; hour < endHour; hour++) {
@@ -255,11 +308,31 @@ exports.bookingController = {
                     return (Math.abs(bookingTime.getTime() - slotTime.getTime()) <
                         service.durationMinutes * 60 * 1000);
                 });
-                if (!hasConflict) {
+                // Check if this slot is already booked by the current user for the same service
+                const isBookedByCurrentUser = existingBookings.some((booking) => {
+                    const bookingTime = new Date(booking.start);
+                    return (booking.clientId === clientId &&
+                        booking.serviceId === serviceId &&
+                        Math.abs(bookingTime.getTime() - slotTime.getTime()) <
+                            service.durationMinutes * 60 * 1000);
+                });
+                const slotData = {
+                    time: slotTime.toISOString(),
+                    available: !hasConflict && !isBookedByCurrentUser,
+                };
+                allSlots.push(slotData);
+                if (hasConflict || isBookedByCurrentUser) {
+                    reservedSlots.push(slotTime.toISOString());
+                }
+                else {
                     availableSlots.push(slotTime.toISOString());
                 }
             }
-            res.json({ availableSlots });
+            res.json({
+                availableSlots,
+                reservedSlots,
+                allSlots,
+            });
         }
         catch (error) {
             console.error("Error checking availability:", error);

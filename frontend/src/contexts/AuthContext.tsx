@@ -85,8 +85,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const user = response.user || response;
         dispatch({ type: "SET_USER", payload: user });
       } catch (error) {
-        console.error("Failed to initialize auth:", error);
+        // Handle authentication errors gracefully
+        if (error instanceof Error) {
+          // Check if it's an authentication error (401/403) or network error
+          const isAuthError =
+            error.message.includes("Not authenticated") ||
+            error.message.includes("Email ose fjalëkalimi janë gabim") ||
+            error.message.includes("Nuk keni të drejta");
+
+          if (!isAuthError) {
+            // Only log non-authentication errors
+            console.error("Failed to initialize auth:", error);
+          }
+        }
         dispatch({ type: "SET_USER", payload: null });
+      } finally {
+        dispatch({ type: "SET_LOADING", payload: false });
       }
     };
 

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authController } from "../controllers/authController";
+import { requireAuth } from "../middleware/session";
 
 const router = Router();
 
@@ -8,5 +9,9 @@ router.post("/register", authController.register);
 router.post("/login", authController.login);
 router.post("/logout", authController.logout);
 router.get("/me", authController.getCurrentUser);
+
+// Profile routes (require authentication)
+router.put("/profile", requireAuth, authController.updateProfile);
+router.put("/password", requireAuth, authController.updatePassword);
 
 export default router;

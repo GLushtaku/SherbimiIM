@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { statsController } from "../controllers/statsController";
-import { authMiddleware } from "../middleware/auth";
+import { requireBusiness } from "../middleware/session";
 
 const router = Router();
 
@@ -8,6 +8,10 @@ const router = Router();
 router.get("/", statsController.getStats);
 
 // GET /api/stats/dashboard - Get dashboard statistics (requires business authentication)
-router.get("/dashboard", authMiddleware, statsController.getDashboardStats);
+router.get(
+  "/dashboard",
+  ...requireBusiness(),
+  statsController.getDashboardStats
+);
 
 export default router;

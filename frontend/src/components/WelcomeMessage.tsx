@@ -3,10 +3,12 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "../hooks/useRole";
 import { RoleBasedContent } from "./RoleGuard";
+import { useRouter } from "next/navigation";
 
 const WelcomeMessage: React.FC = () => {
   const { getRoleDisplayName, getRoleColor } = useRole();
   const { user, isLoading, logout } = useAuth();
+  const router = useRouter();
 
   return (
     <div className="text-center mb-12">
@@ -32,14 +34,14 @@ const WelcomeMessage: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={() => (window.location.href = "/login")}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition-colors"
+                onClick={() => router.push("/login")}
+                className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition-colors"
               >
                 Hyr në Llogari
               </button>
               <button
-                onClick={() => (window.location.href = "/register")}
-                className="bg-white hover:bg-gray-50 text-blue-600 border-2 border-blue-600 px-8 py-3 rounded-lg font-medium text-lg transition-colors"
+                onClick={() => router.push("/register")}
+                className="bg-white cursor-pointer hover:bg-gray-50 text-blue-600 border-2 border-blue-600 px-8 py-3 rounded-lg font-medium text-lg transition-colors"
               >
                 Regjistrohu
               </button>
@@ -60,14 +62,14 @@ const WelcomeMessage: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={() => (window.location.href = "/services")}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition-colors"
+                onClick={() => router.push("/services")}
+                className="bg-green-600 cursor-pointer hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition-colors"
               >
                 Shiko Shërbimet
               </button>
               <button
-                onClick={() => (window.location.href = "/profile")}
-                className="bg-white hover:bg-gray-50 text-green-600 border-2 border-green-600 px-8 py-3 rounded-lg font-medium text-lg transition-colors"
+                onClick={() => router.push("/profile")}
+                className="bg-white cursor-pointer hover:bg-green-600 hover:text-white text-green-600 border-2 border-green-600 px-8 py-3 rounded-lg font-medium text-lg transition-colors"
               >
                 Profili Im
               </button>
@@ -87,13 +89,13 @@ const WelcomeMessage: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={() => (window.location.href = "/dashboard")}
+                onClick={() => router.push("/dashboard")}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition-colors"
               >
                 Dashboard
               </button>
               <button
-                onClick={() => (window.location.href = "/services")}
+                onClick={() => router.push("/services")}
                 className="bg-white hover:bg-gray-50 text-purple-600 border-2 border-purple-600 px-8 py-3 rounded-lg font-medium text-lg transition-colors"
               >
                 Menaxho Shërbimet

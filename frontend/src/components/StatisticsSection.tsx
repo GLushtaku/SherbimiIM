@@ -47,7 +47,6 @@ const StatisticsSection: React.FC = () => {
     return null;
   }
 
-  // Format numbers for display
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
       return `${(num / 1000000).toFixed(1)}M+`;
@@ -61,7 +60,7 @@ const StatisticsSection: React.FC = () => {
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white mb-12">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold mb-4">Platforma Jonë në Numra</h2>
-        <p className="text-blue-100 text-lg">
+        <p className="text-white text-lg !important">
           Bashkohu me mijëra përdorues që po përdorin Sherbimi IM
         </p>
       </div>

@@ -47,12 +47,16 @@ exports.authController = {
                                 companyName: businessData.companyName,
                                 businessLicense: businessData.businessLicense,
                                 taxId: businessData.taxId,
-                                yearsInBusiness: businessData.yearsInBusiness,
+                                yearsInBusiness: businessData.yearsInBusiness
+                                    ? parseInt(businessData.yearsInBusiness)
+                                    : null,
                                 emergencyContact: businessData.emergencyContact,
                                 alternatePhone: businessData.alternatePhone,
                                 acceptsWalkIns: businessData.acceptsWalkIns || false,
                                 appointmentRequired: businessData.appointmentRequired !== false,
-                                maxBookingsPerDay: businessData.maxBookingsPerDay,
+                                maxBookingsPerDay: businessData.maxBookingsPerDay
+                                    ? parseInt(businessData.maxBookingsPerDay)
+                                    : null,
                             },
                         }
                         : undefined,
@@ -188,6 +192,32 @@ exports.authController = {
                     phoneNumber: true,
                     role: true,
                     createdAt: true,
+                    businessProfile: {
+                        select: {
+                            id: true,
+                            companyName: true,
+                            businessLicense: true,
+                            taxId: true,
+                            yearsInBusiness: true,
+                            emergencyContact: true,
+                            alternatePhone: true,
+                            acceptsWalkIns: true,
+                            appointmentRequired: true,
+                            maxBookingsPerDay: true,
+                        },
+                    },
+                    clientProfile: {
+                        select: {
+                            id: true,
+                            dateOfBirth: true,
+                            gender: true,
+                            emergencyContact: true,
+                            preferredContact: true,
+                            notificationPreferences: true,
+                            totalBookings: true,
+                            loyaltyPoints: true,
+                        },
+                    },
                 },
             });
             if (!user) {
@@ -198,6 +228,139 @@ exports.authController = {
         catch (error) {
             console.error("Get current user error:", error);
             res.status(500).json({ error: "Failed to get current user" });
+        }
+    },
+    // PUT /api/auth/profile - Update user profile
+    updateProfile: async (req, res) => {
+        try {
+            if (!req.session.userId) {
+                return res.status(401).json({ error: "Not authenticated" });
+            }
+            const { name, phoneNumber, profileData } = req.body;
+            // Update basic user information
+            const updatedUser = await prisma.user.update({
+                where: { id: req.session.userId },
+                data: {
+                    name,
+                    phoneNumber,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    phoneNumber: true,
+                    role: true,
+                    createdAt: true,
+                },
+            });
+            // Update role-specific profile data
+            if (profileData) {
+                if (updatedUser.role === "BUSINESS" && profileData.businessProfile) {
+                    await prisma.businessProfile.upsert({
+                        where: { userId: req.session.userId },
+                        update: {
+                            companyName: profileData.businessProfile.companyName,
+                            businessLicense: profileData.businessProfile.businessLicense,
+                            taxId: profileData.businessProfile.taxId,
+                            yearsInBusiness: profileData.businessProfile.yearsInBusiness,
+                            emergencyContact: profileData.businessProfile.emergencyContact,
+                            alternatePhone: profileData.businessProfile.alternatePhone,
+                            acceptsWalkIns: profileData.businessProfile.acceptsWalkIns,
+                            appointmentRequired: profileData.businessProfile.appointmentRequired,
+                            maxBookingsPerDay: profileData.businessProfile.maxBookingsPerDay,
+                        },
+                        create: {
+                            userId: req.session.userId,
+                            companyName: profileData.businessProfile.companyName,
+                            businessLicense: profileData.businessProfile.businessLicense,
+                            taxId: profileData.businessProfile.taxId,
+                            yearsInBusiness: profileData.businessProfile.yearsInBusiness,
+                            emergencyContact: profileData.businessProfile.emergencyContact,
+                            alternatePhone: profileData.businessProfile.alternatePhone,
+                            acceptsWalkIns: profileData.businessProfile.acceptsWalkIns,
+                            appointmentRequired: profileData.businessProfile.appointmentRequired,
+                            maxBookingsPerDay: profileData.businessProfile.maxBookingsPerDay,
+                        },
+                    });
+                }
+                else if (updatedUser.role === "CLIENT" && profileData.clientProfile) {
+                    await prisma.clientProfile.upsert({
+                        where: { userId: req.session.userId },
+                        update: {
+                            dateOfBirth: profileData.clientProfile.dateOfBirth
+                                ? new Date(profileData.clientProfile.dateOfBirth)
+                                : null,
+                            gender: profileData.clientProfile.gender,
+                            emergencyContact: profileData.clientProfile.emergencyContact,
+                            preferredContact: profileData.clientProfile.preferredContact,
+                            notificationPreferences: profileData.clientProfile.notificationPreferences,
+                        },
+                        create: {
+                            userId: req.session.userId,
+                            dateOfBirth: profileData.clientProfile.dateOfBirth
+                                ? new Date(profileData.clientProfile.dateOfBirth)
+                                : null,
+                            gender: profileData.clientProfile.gender,
+                            emergencyContact: profileData.clientProfile.emergencyContact,
+                            preferredContact: profileData.clientProfile.preferredContact,
+                            notificationPreferences: profileData.clientProfile.notificationPreferences,
+                        },
+                    });
+                }
+            }
+            res.json({
+                message: "Profile updated successfully",
+                user: updatedUser,
+            });
+        }
+        catch (error) {
+            console.error("Update profile error:", error);
+            res.status(500).json({
+                error: "Failed to update profile",
+                details: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    },
+    // PUT /api/auth/password - Update password
+    updatePassword: async (req, res) => {
+        try {
+            if (!req.session.userId) {
+                return res.status(401).json({ error: "Not authenticated" });
+            }
+            const { currentPassword, newPassword } = req.body;
+            if (!currentPassword || !newPassword) {
+                return res.status(400).json({
+                    error: "Current password and new password are required",
+                });
+            }
+            // Get current user with password
+            const user = await prisma.user.findUnique({
+                where: { id: req.session.userId },
+                select: { password: true },
+            });
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+            // Verify current password
+            const isValidPassword = await bcrypt_1.default.compare(currentPassword, user.password || "");
+            if (!isValidPassword) {
+                return res.status(401).json({ error: "Current password is incorrect" });
+            }
+            // Hash new password
+            const hashedNewPassword = await bcrypt_1.default.hash(newPassword, 10);
+            // Update password
+            await prisma.user.update({
+                where: { id: req.session.userId },
+                data: { password: hashedNewPassword },
+            });
+            res.json({ message: "Password updated successfully" });
+        }
+        catch (error) {
+            console.error("Update password error:", error);
+            res.status(500).json({
+                error: "Failed to update password",
+                details: error instanceof Error ? error.message : "Unknown error",
+            });
         }
     },
 };

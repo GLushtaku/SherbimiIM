@@ -30,6 +30,7 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="number"],
+input[type="tel"],
 textarea,
 select {
   background-color: #ffffff !important;
@@ -40,7 +41,9 @@ select {
 input[type="text"]::placeholder,
 input[type="email"]::placeholder,
 input[type="password"]::placeholder,
+input[type="tel"]::placeholder,
 input[type="number"]::placeholder,
+input[type="tel"]::placeholder,
 textarea::placeholder {
   color: #6b7280 !important;
 }
@@ -66,4 +69,14 @@ h5,
 h6 {
   color: #000000 !important;
   font-weight: bold;
+}
+
+/* Override for white headings in specific components */
+.text-white h1,
+.text-white h2,
+.text-white h3,
+.text-white h4,
+.text-white h5,
+.text-white h6 {
+  color: #ffffff !important;
 }

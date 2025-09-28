@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { authApi, ApiError } from "../../lib/api";
+import toast from "react-hot-toast";
 
 interface RegisterFormProps {
-  onRegisterSuccess?: (user: any) => void;
+  onRegisterSuccess?: (user: unknown) => void;
   onSwitchToLogin?: () => void;
 }
 
@@ -42,41 +43,55 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Clear previous errors
+    setErrors({});
+
     // Validation
-    if (
-      !formData.name.trim() ||
-      !formData.email.trim() ||
-      !formData.password.trim()
-    ) {
-      setError("Emri, email dhe fjalëkalimi janë të detyrueshme");
-      return;
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Emri është i detyrueshëm";
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Fjalëkalimet nuk përputhen");
-      return;
+    if (!formData.email.trim()) {
+      newErrors.email = "Email është i detyrueshëm";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Email nuk është i vlefshëm";
     }
 
-    if (formData.password.length < 6) {
-      setError("Fjalëkalimi duhet të ketë të paktën 6 karaktere");
-      return;
+    if (!formData.password.trim()) {
+      newErrors.password = "Fjalëkalimi është i detyrueshëm";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Fjalëkalimi duhet të ketë të paktën 6 karaktere";
+    }
+
+    if (!formData.confirmPassword.trim()) {
+      newErrors.confirmPassword =
+        "Konfirmimi i fjalëkalimit është i detyrueshëm";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Fjalëkalimet nuk përputhen";
     }
 
     if (formData.role === "BUSINESS") {
       if (!formData.businessData.companyName.trim()) {
-        setError("Emri i kompanisë është i detyrueshëm për biznes");
-        return;
+        newErrors["businessData.companyName"] =
+          "Emri i kompanisë është i detyrueshëm";
       }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
 
     try {
       setLoading(true);
-      setError(null);
 
       const userData = {
         name: formData.name,
@@ -90,15 +105,45 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
       const response = await authApi.register(userData);
 
-      setError(null);
-      if (onRegisterSuccess) {
-        onRegisterSuccess(response);
-      }
+      setSuccess(true);
+      setErrors({});
+      toast.success("Regjistrimi u krye me sukses!.");
+
+      // Clear form data
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        phoneNumber: "",
+        role: "CLIENT" as "CLIENT" | "BUSINESS",
+        businessData: {
+          companyName: "",
+          businessLicense: "",
+          taxId: "",
+          yearsInBusiness: "",
+          emergencyContact: "",
+          alternatePhone: "",
+          acceptsWalkIns: false,
+          appointmentRequired: true,
+          maxBookingsPerDay: "",
+          description: "",
+          phoneNumber: "",
+          address: "",
+          city: "",
+          country: "",
+          postalCode: "",
+          website: "",
+          category: "",
+        },
+      });
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message);
+        setErrors({ general: err.message });
       } else {
-        setError("Gabim në regjistrim. Ju lutemi provoni përsëri.");
+        setErrors({
+          general: "Gabim në regjistrim. Ju lutemi provoni përsëri.",
+        });
       }
     } finally {
       setLoading(false);
@@ -109,6 +154,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = e.target;
+
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
 
     if (name.startsWith("businessData.")) {
       const businessField = name.split(".")[1];
@@ -128,240 +178,250 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4 text-center">Regjistrohu</h2>
+    <div className="min-h-screen flex items-center justify-center ">
+      <div className="w-full max-w-2xl bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/40">
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
+          Regjistrohu! 🎉
+        </h2>
+        <p className="text-sm text-gray-600 mb-6 text-center">
+          Krijoni llogari si {formData.role === "CLIENT" ? "Klient" : "Biznes"}
+        </p>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* User Type Selection */}
-        <div>
-          <label
-            htmlFor="role"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Lloji i Përdoruesit *
-          </label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="CLIENT">Klient</option>
-            <option value="BUSINESS">Biznes</option>
-          </select>
-        </div>
-
-        {/* Basic Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Emri *
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Shkruaj emrin..."
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Email *
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Shkruaj email-in..."
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Fjalëkalimi *
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Shkruaj fjalëkalimin..."
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Konfirmo Fjalëkalimin *
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Konfirmo fjalëkalimin..."
-              required
-            />
-          </div>
-        </div>
-
-        <div>
-          <label
-            htmlFor="phoneNumber"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Numri i Telefonit
-          </label>
-          <input
-            type="tel"
-            id="phoneNumber"
-            name="phoneNumber"
-            value={formData.phoneNumber}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Shkruaj numrin e telefonit..."
-          />
-        </div>
-
-        {/* Business Fields - Only show if role is BUSINESS */}
-        {formData.role === "BUSINESS" && (
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold mb-4">Të dhëna të Biznesit</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="businessData.companyName"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+        {errors.general && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
                 >
-                  Emri i Kompanisë *
-                </label>
-                <input
-                  type="text"
-                  id="businessData.companyName"
-                  name="businessData.companyName"
-                  value={formData.businessData.companyName}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Shkruaj emrin e kompanisë..."
-                  required
-                />
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </div>
-
-              <div>
-                <label
-                  htmlFor="businessData.businessLicense"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Licenca e Biznesit
-                </label>
-                <input
-                  type="text"
-                  id="businessData.businessLicense"
-                  name="businessData.businessLicense"
-                  value={formData.businessData.businessLicense}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Shkruaj licencën..."
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label
-                  htmlFor="businessData.address"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Adresa
-                </label>
-                <input
-                  type="text"
-                  id="businessData.address"
-                  name="businessData.address"
-                  value={formData.businessData.address}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Shkruaj adresën..."
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="businessData.city"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Qyteti
-                </label>
-                <input
-                  type="text"
-                  id="businessData.city"
-                  name="businessData.city"
-                  value={formData.businessData.city}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Shkruaj qytetin..."
-                />
+              <div className="ml-3">
+                <p className="text-sm text-red-800">{errors.general}</p>
               </div>
             </div>
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Duke regjistruar..." : "Regjistrohu"}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* User Type Selector */}
+          <div className="flex mb-6 bg-gray-100 rounded-full p-1 overflow-hidden">
+            {["CLIENT", "BUSINESS"].map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    role: type as "CLIENT" | "BUSINESS",
+                  }));
+                }}
+                disabled={loading}
+                className={`flex-1 py-2 rounded-full transition-all ${
+                  formData.role === type
+                    ? "bg-blue-500 text-white shadow-md"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                {type === "CLIENT" ? "Klient" : "Biznes"}
+              </button>
+            ))}
+          </div>
 
-      <div className="mt-4 text-center">
-        <p className="text-sm text-gray-600">
-          Tashmë keni llogari?{" "}
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <input
+                type="text"
+                name="name"
+                placeholder="Emri *"
+                value={formData.name}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-xl border text-gray-900 focus:ring-4 transition-all placeholder-gray-400 ${
+                  errors.name
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-200"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                }`}
+                required
+              />
+              {errors.name && (
+                <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email *"
+                value={formData.email}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-xl border text-gray-900 focus:ring-4 transition-all placeholder-gray-400 ${
+                  errors.email
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-200"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                }`}
+                required
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <input
+                type="password"
+                name="password"
+                placeholder="Fjalëkalimi *"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-xl border text-gray-900 focus:ring-4 transition-all placeholder-gray-400 ${
+                  errors.password
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-200"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                }`}
+                required
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Konfirmo Fjalëkalimin *"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-xl border text-gray-900 focus:ring-4 transition-all placeholder-gray-400 ${
+                  errors.confirmPassword
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-200"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                }`}
+                required
+              />
+              {errors.confirmPassword && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <input
+              type="tel"
+              name="phoneNumber"
+              placeholder="Numri i Telefonit"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all placeholder-gray-400"
+            />
+          </div>
+
+          {/* Business Fields - Only show if role is BUSINESS */}
+          {formData.role === "BUSINESS" && (
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                Të dhëna të Biznesit
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <input
+                    type="text"
+                    name="businessData.companyName"
+                    placeholder="Emri i Kompanisë *"
+                    value={formData.businessData.companyName}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 rounded-xl border text-gray-900 focus:ring-4 transition-all placeholder-gray-400 ${
+                      errors["businessData.companyName"]
+                        ? "border-red-500 focus:border-red-500 focus:ring-red-200"
+                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                    }`}
+                    required
+                  />
+                  {errors["businessData.companyName"] && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors["businessData.companyName"]}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    name="businessData.businessLicense"
+                    placeholder="Licenca e Biznesit"
+                    value={formData.businessData.businessLicense}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all placeholder-gray-400"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <input
+                    type="text"
+                    name="businessData.address"
+                    placeholder="Adresa"
+                    value={formData.businessData.address}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all placeholder-gray-400"
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    name="businessData.city"
+                    placeholder="Qyteti"
+                    value={formData.businessData.city}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all placeholder-gray-400"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           <button
-            type="button"
-            onClick={onSwitchToLogin}
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            type="submit"
+            disabled={loading || success}
+            className="w-full py-3 cursor-pointer rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-md hover:from-blue-600 hover:to-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50"
           >
-            Hyr këtu
+            {loading
+              ? "Duke regjistruar..."
+              : success
+              ? "Regjistruar!"
+              : "Regjistrohu"}
           </button>
-        </p>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Tashmë keni llogari?{" "}
+            <button
+              type="button"
+              onClick={onSwitchToLogin}
+              className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
+              disabled={loading}
+            >
+              Hyr këtu
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

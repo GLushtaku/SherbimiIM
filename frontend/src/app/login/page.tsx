@@ -30,7 +30,9 @@ export default function LoginPage() {
           router.push("/");
         }
       } catch (err) {
-        router.push("/login");
+        // Silently handle authentication errors - user is not logged in
+        // This is normal behavior, no need to log or redirect
+        setLoading(false);
       }
     };
 

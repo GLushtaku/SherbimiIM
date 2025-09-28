@@ -59,7 +59,7 @@ app.use((0, express_session_1.default)({
     cookie: {
         httpOnly: true,
         secure: false, // Set to false for development
-        maxAge: 1000 * 60 * 60 * 24, // 1 ditë
+        maxAge: 1000 * 60 * 60 * 24, // 1 dit
         sameSite: "lax", // Set to lax for development
     },
 }));

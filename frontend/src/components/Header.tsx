@@ -3,12 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
-import { useRole } from "../hooks/useRole";
 import { RoleGuard, ClientOnly, BusinessOnly } from "../components/RoleGuard";
 
 const Header: React.FC = () => {
   const { user, isLoading, logout } = useAuth();
-  const { canViewProfile, canViewDashboard } = useRole();
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -90,13 +88,13 @@ const Header: React.FC = () => {
           <nav className="hidden md:flex space-x-8">
             <button
               onClick={() => handleNavigation("/")}
-              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="text-gray-700 cursor-pointer hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Ballina
             </button>
             <button
               onClick={() => handleNavigation("/services")}
-              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="text-gray-700 cursor-pointer hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Shërbimet
             </button>
@@ -105,7 +103,7 @@ const Header: React.FC = () => {
             <BusinessOnly>
               <button
                 onClick={() => handleNavigation("/dashboard")}
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-gray-700 cursor-pointer hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Dashboard
               </button>
@@ -119,7 +117,7 @@ const Header: React.FC = () => {
                 {/* User Avatar/Name Button */}
                 <button
                   onClick={toggleUserDropdown}
-                  className="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+                  className="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">
@@ -161,7 +159,7 @@ const Header: React.FC = () => {
                     <ClientOnly>
                       <button
                         onClick={() => handleNavigation("/profile")}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2"
+                        className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2"
                       >
                         <svg
                           className="w-4 h-4"
@@ -184,7 +182,7 @@ const Header: React.FC = () => {
                     <BusinessOnly>
                       <button
                         onClick={() => handleNavigation("/dashboard")}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2"
+                        className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2"
                       >
                         <svg
                           className="w-4 h-4"
@@ -203,26 +201,28 @@ const Header: React.FC = () => {
                       </button>
                     </BusinessOnly>
 
-                    {/* Services Link for All Users */}
-                    <button
-                      onClick={() => handleNavigation("/services")}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    {/* Bookings Link for Clients */}
+                    <ClientOnly>
+                      <button
+                        onClick={() => handleNavigation("/bookings")}
+                        className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                        />
-                      </svg>
-                      <span>Shërbimet</span>
-                    </button>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <span>Rezervimet e Mia</span>
+                      </button>
+                    </ClientOnly>
 
                     {/* Divider */}
                     <div className="border-t border-gray-100 my-1"></div>
@@ -231,7 +231,7 @@ const Header: React.FC = () => {
                     <button
                       onClick={handleLogout}
                       disabled={isLoading}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2 disabled:opacity-50"
+                      className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2 disabled:opacity-50"
                     >
                       {isLoading ? (
                         <>
@@ -280,9 +280,9 @@ const Header: React.FC = () => {
             ) : (
               <button
                 onClick={() => handleNavigation("/login")}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                className="bg-blue-500 cursor-pointer hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                Hyr
+                Fillo Tani
               </button>
             )}
           </div>
@@ -362,23 +362,28 @@ const Header: React.FC = () => {
             {user ? (
               <div className="px-3 py-2 text-sm text-gray-700 border-t border-gray-200 pt-4">
                 <div className="font-medium">{user.name}</div>
-                <div className="text-gray-500 mb-3">{user.role}</div>
 
                 {/* Mobile Profile/Dashboard Links */}
                 <div className="space-y-2 mb-3">
                   <ClientOnly>
                     <button
                       onClick={() => handleNavigation("/profile")}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                      className="w-full cursor-pointer text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                     >
                       Profili Im
+                    </button>
+                    <button
+                      onClick={() => handleNavigation("/bookings")}
+                      className="w-full cursor-pointer text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                    >
+                      Rezervimet e Mia
                     </button>
                   </ClientOnly>
 
                   <BusinessOnly>
                     <button
                       onClick={() => handleNavigation("/dashboard")}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                      className="w-full cursor-pointer text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                     >
                       Dashboard
                     </button>
@@ -388,7 +393,7 @@ const Header: React.FC = () => {
                 <button
                   onClick={handleLogout}
                   disabled={isLoading}
-                  className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="w-full cursor-pointer bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   {isLoading ? "Duke u çkyçur..." : "Çkyçu"}
                 </button>
@@ -396,7 +401,7 @@ const Header: React.FC = () => {
             ) : (
               <button
                 onClick={() => handleNavigation("/login")}
-                className="px-3 py-2 w-full bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm font-medium transition-colors"
+                className="px-3 py-2 w-full cursor-pointer bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm font-medium transition-colors"
               >
                 Hyr
               </button>
