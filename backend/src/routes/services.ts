@@ -6,6 +6,11 @@ const router = Router();
 
 // Service routes
 router.get("/", serviceController.getAllServices);
+router.get(
+  "/business",
+  ...requireBusiness(),
+  serviceController.getBusinessServices
+);
 router.get("/:id", serviceController.getServiceById);
 
 // Routes që kërkojnë autentifikim dhe businessId

@@ -47,6 +47,7 @@ export interface Service {
   price: number;
   durationMinutes: number;
   businessId: string;
+  categoryId?: string;
   createdAt: string;
   updatedAt: string;
   // Related data
@@ -89,8 +90,22 @@ export interface Employee {
   name: string;
   email: string;
   phone?: string;
+  phoneNumber?: string;
+  position?: string;
+  isActive?: boolean;
   businessId: string;
-  services?: Service[];
+  business?: {
+    id: string;
+    name: string;
+  };
+  employeeServices?: Array<{
+    service: {
+      id: string;
+      name: string;
+      price?: number;
+      durationMinutes?: number;
+    };
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -439,9 +454,11 @@ export const serviceApi = {
     publicApiClient.get<Service>(`/services/${id}`),
 
   // Protected endpoints (authentication required)
-  createService: (service: Service) =>
+  getBusinessServices: () =>
+    apiClient.get<{ services: Service[] }>("/services/business"),
+  createService: (service: Partial<Service>) =>
     apiClient.post<Service>("/services", service),
-  updateService: (id: string, service: Service) =>
+  updateService: (id: string, service: Partial<Service>) =>
     apiClient.put<Service>(`/services/${id}`, service),
   deleteService: (id: string) => apiClient.delete<Service>(`/services/${id}`),
 };
@@ -463,7 +480,7 @@ export const categoryApi = {
 //Employe API {require bussines authentication}
 export const employeeApi = {
   // Get all employees
-  getAllEmployees: () => apiClient.get<Employee[]>("/employees"),
+  getAllEmployees: () => apiClient.get<{ employees: Employee[] }>("/employees"),
 
   // Get employee by ID
   getEmployeeById: (id: string) => apiClient.get<Employee>(`/employees/${id}`),
@@ -472,7 +489,9 @@ export const employeeApi = {
   createEmployee: (employeeData: {
     name: string;
     email: string;
-    phone?: string;
+    phoneNumber?: string;
+    position?: string;
+    isActive?: boolean;
   }) => apiClient.post<Employee>("/employees", employeeData),
 
   // Update employee
@@ -481,7 +500,9 @@ export const employeeApi = {
     employeeData: {
       name?: string;
       email?: string;
-      phone?: string;
+      phoneNumber?: string;
+      position?: string;
+      isActive?: boolean;
     }
   ) => apiClient.put<Employee>(`/employees/${id}`, employeeData),
 
@@ -577,13 +598,8 @@ export const bookApi = {
   getAllBooks: () => apiClient.get<Book[]>("/books"),
 
   // Create book
-  createBook: (bookData: {
-    title: string;
-    authorId: string;
-    isbn?: string;
-    publishedDate?: string;
-    description?: string;
-  }) => apiClient.post<Book>("/books", bookData),
+  createBook: (bookData: { title: string; authorId: string }) =>
+    apiClient.post<Book>("/books", bookData),
 
   // Get book by ID
   getBookById: (id: string) => apiClient.get<Book>(`/books/${id}`),

@@ -187,6 +187,62 @@ export const authController = {
     }
   },
 
+  // POST /api/auth/oauth-login - Handle OAuth login
+  oauthLogin: async (req: Request, res: Response) => {
+    try {
+      const {
+        email,
+        name,
+        provider,
+        providerId,
+        image,
+        role = "CLIENT",
+      } = req.body;
+
+      if (!email || !name) {
+        return res.status(400).json({
+          error: "Email and name are required",
+        });
+      }
+
+      let user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        // Create new user for OAuth
+        user = await prisma.user.create({
+          data: {
+            name,
+            email,
+            password: null, // OAuth users don't have passwords
+            role: role as "CLIENT" | "BUSINESS",
+          },
+        });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+      req.session.userRole = user.role;
+
+      res.json({
+        message: "OAuth login successful",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      console.error("OAuth login error:", error);
+      res.status(500).json({
+        error: "Failed to process OAuth login",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  },
+
   // POST /api/auth/logout - Logout user
   logout: async (req: Request, res: Response) => {
     try {

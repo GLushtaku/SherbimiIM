@@ -1,15 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useServices } from "../../hooks/useServices";
+import { useCategories } from "../../hooks/useCategories";
 import ServiceCard from "../../components/ServiceCard";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function ServicesPage() {
   const { services, loading, error, refetch } = useServices();
+  const { categories } = useCategories();
   const [searchTerm, setSearchTerm] = useState("");
   const [priceFilter, setPriceFilter] = useState<string>("all");
   const [durationFilter, setDurationFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+  // Handle URL parameters for category filtering
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get("category");
+    if (categoryParam) {
+      setCategoryFilter(categoryParam);
+    }
+  }, []);
 
   // Filter services based on search and filters
   const filteredServices = (services || []).filter((service) => {
@@ -50,7 +62,12 @@ export default function ServicesPage() {
       }
     })();
 
-    return matchesSearch && matchesPrice && matchesDuration;
+    const matchesCategory = (() => {
+      if (categoryFilter === "all") return true;
+      return service.category?.name === categoryFilter;
+    })();
+
+    return matchesSearch && matchesPrice && matchesDuration && matchesCategory;
   });
 
   if (loading) {
@@ -115,7 +132,7 @@ export default function ServicesPage() {
 
           {/* Filters */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Search */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -128,6 +145,27 @@ export default function ServicesPage() {
                   placeholder="Shkruani emrin e shërbimit..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              {/* Category Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kategoria
+                </label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Të gjitha kategoritë</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.icon
+                        ? `${category.icon} ${category.name}`
+                        : category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Price Filter */}
@@ -166,6 +204,51 @@ export default function ServicesPage() {
                 </select>
               </div>
             </div>
+
+            {/* Filter Summary */}
+            {(searchTerm ||
+              priceFilter !== "all" ||
+              durationFilter !== "all" ||
+              categoryFilter !== "all") && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span>Filtrat aktive:</span>
+                    {searchTerm && (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                        Kërkim: &quot;{searchTerm}&quot;
+                      </span>
+                    )}
+                    {categoryFilter !== "all" && (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                        Kategoria: {categoryFilter}
+                      </span>
+                    )}
+                    {priceFilter !== "all" && (
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                        Çmimi: {priceFilter}
+                      </span>
+                    )}
+                    {durationFilter !== "all" && (
+                      <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
+                        Koha: {durationFilter}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setPriceFilter("all");
+                      setDurationFilter("all");
+                      setCategoryFilter("all");
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Fshij të gjitha filtrat
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Services Grid */}
@@ -188,18 +271,23 @@ export default function ServicesPage() {
                 Nuk u gjetën shërbime
               </h3>
               <p className="text-gray-500 mb-4">
-                {searchTerm || priceFilter !== "all" || durationFilter !== "all"
+                {searchTerm ||
+                priceFilter !== "all" ||
+                durationFilter !== "all" ||
+                categoryFilter !== "all"
                   ? "Provo të ndryshosh filtrat për të gjetur shërbime të tjera."
                   : "Nuk ka shërbime të disponueshme momentalisht."}
               </p>
               {(searchTerm ||
                 priceFilter !== "all" ||
-                durationFilter !== "all") && (
+                durationFilter !== "all" ||
+                categoryFilter !== "all") && (
                 <button
                   onClick={() => {
                     setSearchTerm("");
                     setPriceFilter("all");
                     setDurationFilter("all");
+                    setCategoryFilter("all");
                   }}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
                 >

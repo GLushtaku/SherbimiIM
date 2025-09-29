@@ -88,6 +88,57 @@ exports.serviceController = {
             res.status(500).json({ error: "Failed to fetch services" });
         }
     },
+    // GET /api/services/business - Get services for current business
+    getBusinessServices: async (req, res) => {
+        try {
+            const businessId = req.businessId;
+            if (!businessId) {
+                return res.status(400).json({
+                    error: "Business ID is required",
+                });
+            }
+            const services = await prisma.service.findMany({
+                where: { businessId },
+                include: {
+                    business: {
+                        select: {
+                            id: true,
+                            name: true,
+                            city: true,
+                            address: true,
+                            phoneNumber: true,
+                            website: true,
+                        },
+                    },
+                    category: {
+                        select: {
+                            id: true,
+                            name: true,
+                            description: true,
+                            icon: true,
+                        },
+                    },
+                    employeeServices: {
+                        include: {
+                            employee: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    position: true,
+                                    avatar: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            return res.json({ services });
+        }
+        catch (error) {
+            console.error("Error fetching business services:", error);
+            res.status(500).json({ error: "Failed to fetch business services" });
+        }
+    },
     // GET /api/services//{id}
     getServiceById: async (req, res) => {
         try {

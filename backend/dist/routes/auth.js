@@ -9,6 +9,7 @@ router.post("/register", authController_1.authController.register);
 router.post("/login", authController_1.authController.login);
 router.post("/logout", authController_1.authController.logout);
 router.get("/me", authController_1.authController.getCurrentUser);
+router.post("/oauth-login", authController_1.authController.oauthLogin);
 // Profile routes (require authentication)
 router.put("/profile", session_1.requireAuth, authController_1.authController.updateProfile);
 router.put("/password", session_1.requireAuth, authController_1.authController.updatePassword);

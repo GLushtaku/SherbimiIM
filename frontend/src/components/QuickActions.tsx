@@ -33,7 +33,7 @@ const QuickActions: React.FC = () => {
           />
         </svg>
       ),
-      href: "/services/new",
+      href: "/dashboard/services",
       color: "blue",
     },
     {
@@ -55,7 +55,7 @@ const QuickActions: React.FC = () => {
           />
         </svg>
       ),
-      href: "/employees/new",
+      href: "/dashboard/employees",
       color: "green",
     },
     {
@@ -77,7 +77,7 @@ const QuickActions: React.FC = () => {
           />
         </svg>
       ),
-      href: "/bookings",
+      href: "/dashboard",
       color: "purple",
     },
     {
@@ -105,18 +105,19 @@ const QuickActions: React.FC = () => {
           />
         </svg>
       ),
-      href: "/profile",
+      href: "/dashboard/settings",
       color: "orange",
     },
   ];
 
   const colorClasses = {
-    blue: "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100",
-    green: "bg-green-50 text-green-600 border-green-200 hover:bg-green-100",
+    blue: "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 cursor-pointer",
+    green:
+      "bg-green-50 text-green-600 border-green-200 hover:bg-green-100 cursor-pointer",
     purple:
-      "bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100",
+      "bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100 cursor-pointer",
     orange:
-      "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100",
+      "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 cursor-pointer",
   };
 
   const handleActionClick = (href: string) => {
@@ -133,7 +134,7 @@ const QuickActions: React.FC = () => {
           <button
             key={action.id}
             onClick={() => handleActionClick(action.href)}
-            className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+            className={`p-4 rounded-lg border-2 transition-all duration-200 text-left cursor-pointer ${
               colorClasses[action.color]
             }`}
           >
